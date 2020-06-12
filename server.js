@@ -8,6 +8,7 @@ const { connectDB } = require("./config/db");
 const blogRoutes = require("./routes/blog");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
+const categoryRoutes = require("./routes/category");
 
 const app = express();
 
@@ -23,6 +24,7 @@ if (process.env.NODE_ENV === "development") {
 app.use("/api/blog", blogRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/category", categoryRoutes);
 
 const PORT = process.env.PORT;
 
