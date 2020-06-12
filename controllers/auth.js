@@ -44,7 +44,7 @@ exports.signin = async (req, res) => {
     });
     res.cookie("token", token, { expiresIn: "1d" });
     const { _id, username, name, email, role } = user;
-    res.json({ user: _id, username, name, email, role, token });
+    res.json({ user: { _id, username, name, email, role }, token });
   } catch (error) {}
 };
 
