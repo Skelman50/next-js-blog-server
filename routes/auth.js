@@ -18,7 +18,7 @@ router.post("/signin", userSigninValidator, runValidation, signin);
 router.get("/signout", signout);
 
 router.get("/secret", requireSignin, (req, res) => {
-  res.json({ secret: true });
+  res.json({ secret: req.user });
 });
 
 module.exports = router;

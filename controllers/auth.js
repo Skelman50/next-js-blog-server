@@ -54,3 +54,36 @@ exports.signout = async (req, res) => {
 };
 
 exports.requireSignin = expressJwt({ secret: process.env.JWT_SECRET });
+
+exports.authMiddleware = async (req, res, next) => {
+  const authUserId = req.user.id;
+
+  try {
+    const user = await User.findById(authUserId);
+    if (!user) {
+      throw new Error();
+    }
+    req.profile = user;
+    next();
+  } catch (error) {
+    res.status(400).json({ error: "User not found" });
+  }
+};
+
+exports.adminMiddleware = async (req, res, next) => {
+  const adminUserId = req.user.id;
+  try {
+    const user = await User.findById(adminUserId);
+    if (!user) {
+      throw new Error();
+    }
+
+    if (user.role !== 1) {
+      return res.status(400).json({ error: "Admin resource. Access danied!" });
+    }
+    req.profile = user;
+    next();
+  } catch (error) {
+    res.status(400).json({ error: "User not found" });
+  }
+};

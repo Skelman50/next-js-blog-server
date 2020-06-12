@@ -5,8 +5,9 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
 const { connectDB } = require("./config/db");
-const blogRouter = require("./routes/blog");
+const blogRoutes = require("./routes/blog");
 const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/user");
 
 const app = express();
 
@@ -19,8 +20,9 @@ if (process.env.NODE_ENV === "development") {
   app.use(cors({ origin: process.env.CLIENT_URL }));
 }
 
-app.use("/api/blog", blogRouter);
+app.use("/api/blog", blogRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 
 const PORT = process.env.PORT;
 
