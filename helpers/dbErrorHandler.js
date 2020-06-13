@@ -20,8 +20,8 @@ const uniqueMessage = (error) => {
  * Get the erroror message from error object
  */
 exports.dbErrorHandler = (error) => {
-  let message = "";
-
+  let message = "Something went wrong";
+  console.log(error);
   if (error.code) {
     switch (error.code) {
       case 11000:
