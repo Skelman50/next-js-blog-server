@@ -1,4 +1,4 @@
-const Category = require("../models/category");
+const Tag = require("../models/tag");
 const slugify = require("slugify");
 const { dbErrorHandler } = require("../helpers/dbErrorHandler");
 
@@ -6,7 +6,7 @@ exports.create = async (req, res) => {
   const { name } = req.body;
   const slug = slugify(name).toLowerCase();
   try {
-    const data = await Category.create({ name, slug });
+    const data = await Tag.create({ name, slug });
     res.json(data);
   } catch (error) {
     res.status(400).json({ error: dbErrorHandler(error) });
@@ -15,8 +15,8 @@ exports.create = async (req, res) => {
 
 exports.list = async (req, res) => {
   try {
-    const categories = await Category.find({});
-    res.json(categories);
+    const tags = await Tag.find({});
+    res.json(tags);
   } catch (error) {
     res.status(400).json({ error: dbErrorHandler(error) });
   }
@@ -25,8 +25,8 @@ exports.list = async (req, res) => {
 exports.read = async (req, res) => {
   const slug = req.params.slug.toLowerCase();
   try {
-    const category = await Category.findOne({ slug });
-    res.json(category);
+    const tag = await Tag.findOne({ slug });
+    res.json(tag);
   } catch (error) {
     res.status(400).json({ error: dbErrorHandler(error) });
   }
@@ -35,8 +35,8 @@ exports.read = async (req, res) => {
 exports.remove = async (req, res) => {
   const slug = req.params.slug.toLowerCase();
   try {
-    await Category.findOneAndRemove({ slug });
-    res.json({ message: "Category delete successfully!" });
+    await Tag.findOneAndDelete({ slug });
+    res.json({ message: "Tag delete successfully!" });
   } catch (error) {
     console.log(error);
     res.status(400).json({ error: dbErrorHandler(error) });

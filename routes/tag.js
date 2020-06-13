@@ -2,16 +2,16 @@ const express = require("express");
 
 const { adminMiddleware, requireSignin } = require("../controllers/auth");
 
-const { categoryCreateValidator } = require("../validators/category");
+const { tagCreateValidator } = require("../validators/tag");
 const { runValidation } = require("../validators/index");
 
-const { create, list, read, remove } = require("../controllers/category");
+const { create, list, read, remove } = require("../controllers/tag");
 
 const router = express.Router();
 
 router.post(
   "/",
-  categoryCreateValidator,
+  tagCreateValidator,
   runValidation,
   requireSignin,
   adminMiddleware,
