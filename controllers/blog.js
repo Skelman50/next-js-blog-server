@@ -61,9 +61,135 @@ exports.create = (req, res) => {
     }
     try {
       const result = await blog.save();
-      res.json({ result });
+      res.json(result);
     } catch (error) {
-      res.json({ error: dbErrorHandler(error) });
+      res.status(400).json({ error: dbErrorHandler(error) });
     }
   });
+};
+
+exports.list = async (req, res) => {
+  try {
+    const blogs = await Blog.find({})
+      .populate("categories", "_id name slug")
+      .populate("tags", "_id name slug")
+      .populate("postedBy", "_id name username")
+      .select(
+        "_id title slug exerpt categories tags postedBy createdAt updatedAt"
+      );
+    res.json(blogs);
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
+  }
+};
+
+exports.listAllBlogsCategoriesTags = async (req, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+  const skip = req.query.skip ? parseInt(req.query.skip) : 0;
+
+  try {
+    const blogs = await Blog.find({})
+      .populate("categories", "_id name slug")
+      .populate("tags", "_id name slug")
+      .populate("postedBy", "_id name username")
+      .sort({ createAt: -1 })
+      .limit(limit)
+      .skip(skip)
+      .select(
+        "_id title slug exerpt categories tags postedBy createdAt updatedAt"
+      );
+    const categories = await CAtegory.find({});
+    const tags = await Tag.find({});
+    res.json({ blogs, categories, tags, size: blogs.length });
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
+  }
+};
+
+exports.read = async (req, res) => {
+  const slug = req.params.slug.toLowerCase();
+  try {
+    const blog = await Blog.findOne({ slug })
+      .populate("categories", "_id name slug")
+      .populate("tags", "_id name slug")
+      .populate("postedBy", "_id name username")
+      .select(
+        "_id title slug body mtitle mdesc categories tags postedBy createdAt updatedAt"
+      );
+    res.json(blog);
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
+  }
+};
+
+exports.remove = async (req, res) => {
+  const slug = req.params.slug.toLowerCase();
+  try {
+    await Blog.findOneAndDelete({ slug });
+    res.json({ message: "Blog delete successfully!" });
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
+  }
+};
+
+exports.update = async (req, res) => {
+  const slug = req.params.slug.toLowerCase();
+
+  let oldBlog = await Blog.findOne({ slug });
+
+  if (!oldBlog) {
+    return res.status(404).json({ error: "Can't update empty blog!" });
+  }
+  const form = new formidable.IncomingForm();
+  form.keepExtensions = true;
+
+  form.parse(req, async (error, fields, files) => {
+    if (error) {
+      return res.status(400).json({ error: "Image could not upload!" });
+    }
+
+    const slugBeforeMerge = oldBlog.slug;
+    oldBlog = _.merge(oldBlog, fields);
+    oldBlog.slug = slugBeforeMerge;
+    const { body, categories, tags } = fields;
+    if (body) {
+      oldBlog.exerpt = smartTrim(body, 320, " ", " ...");
+      oldBlog.mdesc = stripHTML(body.substr(0, 160));
+    }
+
+    if (categories) {
+      oldBlog.categories = categories.split(",");
+    }
+
+    if (tags) {
+      oldBlog.tags = tags.split(",");
+    }
+
+    if (files.photo) {
+      if (files.photo.size > 1000000) {
+        return res
+          .status(400)
+          .json({ error: "Image should be less then 1mb in size" });
+      }
+      oldBlog.photo.data = fs.readFileSync(files.photo.path);
+      oldBlog.photo.contentType = files.photo.type;
+    }
+    try {
+      const result = await oldBlog.save();
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({ error: dbErrorHandler(error) });
+    }
+  });
+};
+
+exports.photo = async (req, res) => {
+  const slug = req.params.slug.toLowerCase();
+  try {
+    const blogPhoto = await Blog.findOne({ slug }).select("photo");
+    res.set("Content-Type", blogPhoto.photo.contentType);
+    res.send(blogPhoto.photo.data);
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
+  }
 };
