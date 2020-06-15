@@ -193,3 +193,22 @@ exports.photo = async (req, res) => {
     res.status(400).json({ error: dbErrorHandler(error) });
   }
 };
+
+exports.listRelated = async (req, res) => {
+  const limit = req.body.limit ? parseInt(req.body.limit) : 3;
+  const {
+    blog: { _id, categories },
+  } = req.body;
+  try {
+    const data = await Blog.find({
+      _id: { $ne: _id },
+      categories: { $in: categories },
+    })
+      .limit(limit)
+      .populate("postedBy", "_id name profile")
+      .select("_id title slug postedBy exerpt createdAt updatedAt");
+    res.json(data);
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
+  }
+};
