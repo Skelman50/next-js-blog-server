@@ -1,4 +1,5 @@
 const Category = require("../models/category");
+const Blog = require("../models/blog");
 const slugify = require("slugify");
 const { dbErrorHandler } = require("../helpers/dbErrorHandler");
 
@@ -26,7 +27,14 @@ exports.read = async (req, res) => {
   const slug = req.params.slug.toLowerCase();
   try {
     const category = await Category.findOne({ slug });
-    res.json(category);
+    const blogs = await Blog.find({ categories: category })
+      .populate("categories", "_id name slug")
+      .populate("tags", "_id name slug")
+      .populate("postedBy", "_id name")
+      .select(
+        "_id title slug exerpt categories tags postedBy createdAt updatedAt"
+      );
+    res.json({ category, blogs });
   } catch (error) {
     res.status(400).json({ error: dbErrorHandler(error) });
   }
