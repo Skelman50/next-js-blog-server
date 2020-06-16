@@ -9,6 +9,7 @@ const {
   update,
   photo,
   listRelated,
+  search,
 } = require("../controllers/blog");
 
 const router = express.Router();
@@ -18,6 +19,7 @@ router.get("/", list);
 router.get("/categories-tags", listAllBlogsCategoriesTags);
 router.get("/photo/:slug", photo);
 router.post("/related", listRelated);
+router.get("/search", search);
 router.get("/:slug", read);
 router.delete("/:slug", requireSignin, adminMiddleware, remove);
 router.put("/:slug", requireSignin, adminMiddleware, update);

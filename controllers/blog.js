@@ -212,3 +212,23 @@ exports.listRelated = async (req, res) => {
     res.status(400).json({ error: dbErrorHandler(error) });
   }
 };
+
+exports.search = async (req, res) => {
+  const { search } = req.query;
+  if (search) {
+    try {
+      const blogs = await Blog.find({
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { body: { $regex: search, $options: "i" } },
+        ],
+      }).select("-photo -body");
+
+      res.json(blogs);
+    } catch (error) {
+      res.status(400).json({ error: dbErrorHandler(error) });
+    }
+  } else {
+    res.json([]);
+  }
+};
