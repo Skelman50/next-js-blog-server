@@ -1,7 +1,10 @@
-const User = require("../models/user");
 const shortId = require("shortid");
 const jwt = require("jsonwebtoken");
 const expressJwt = require("express-jwt");
+
+const User = require("../models/user");
+const Blog = require("../models/blog");
+const { dbErrorHandler } = require("../helpers/dbErrorHandler");
 
 exports.signup = async (req, res) => {
   const { name, email, password } = req.body;
@@ -91,5 +94,20 @@ exports.adminMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     res.status(400).json({ error: "User not found" });
+  }
+};
+
+exports.canUpdateDeleteBlog = async (req, res, next) => {
+  try {
+    const slug = req.params.slug.toLowerCase();
+    const blog = await Blog.findOne({ slug });
+    const authorized =
+      blog.postedBy._id.toString() === req.profile._id.toString();
+    if (!authorized) {
+      return res.status(403).json({ error: "You are not authorized!" });
+    }
+    next();
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
   }
 };

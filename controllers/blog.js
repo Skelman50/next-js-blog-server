@@ -7,6 +7,7 @@ const fs = require("fs");
 const Blog = require("../models/blog");
 const CAtegory = require("../models/category");
 const Tag = require("../models/tag");
+const User = require("../models/user");
 
 const { dbErrorHandler } = require("../helpers/dbErrorHandler");
 const { smartTrim } = require("../helpers/blog");
@@ -230,5 +231,23 @@ exports.search = async (req, res) => {
     }
   } else {
     res.json([]);
+  }
+};
+
+exports.listByUser = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found!" });
+    }
+    const blogs = Blog.find({ postedBy: user._id })
+      .populate("categories", "_id name slug")
+      .populate("tags", "_id name slug")
+      .populate("postedBy", "_id name username ")
+      .select("_id title slug postedBy createdAt updatedAt");
+    res.json(blogs);
+  } catch (error) {
+    res.status(400).json({ error: dbErrorHandler(error) });
   }
 };
