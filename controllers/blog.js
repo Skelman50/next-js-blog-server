@@ -135,9 +135,7 @@ exports.remove = async (req, res) => {
 
 exports.update = async (req, res) => {
   const slug = req.params.slug.toLowerCase();
-
   let oldBlog = await Blog.findOne({ slug });
-
   if (!oldBlog) {
     return res.status(404).json({ error: "Can't update empty blog!" });
   }
@@ -241,7 +239,7 @@ exports.listByUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found!" });
     }
-    const blogs = Blog.find({ postedBy: user._id })
+    const blogs = await Blog.find({ postedBy: user._id })
       .populate("categories", "_id name slug")
       .populate("tags", "_id name slug")
       .populate("postedBy", "_id name username ")
