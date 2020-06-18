@@ -1,6 +1,10 @@
 const shortId = require("shortid");
 const jwt = require("jsonwebtoken");
 const expressJwt = require("express-jwt");
+const sgMail = require("@sendgrid/mail");
+const _ = require("lodash");
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const User = require("../models/user");
 const Blog = require("../models/blog");
@@ -109,5 +113,60 @@ exports.canUpdateDeleteBlog = async (req, res, next) => {
     next();
   } catch (error) {
     res.status(400).json({ error: dbErrorHandler(error) });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error();
+    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_RESET_PASSWORD, {
+      expiresIn: "10m",
+    });
+    const emailData = {
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: `Password reset link`,
+      html: `
+          <p>Please use this link to reset ypur password:</p>
+          <p>${process.env.CLIENT_URL}/auth/password/reset/${token}</p>
+          <hr/>
+          <p>This email may contain secsetive information!</p>
+          <p>https://seoblog.com</p>
+      `,
+    };
+    await user.updateOne({ resetPasswordLink: token });
+    await sgMail.send(emailData);
+    res.json({ message: `Email has been send to ${email}` });
+  } catch (error) {
+    res.status(404).json({ error: "User not found!" });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { resetPasswordLink, password } = req.body;
+  try {
+    var decoded = await jwt.verify(
+      resetPasswordLink,
+      process.env.JWT_RESET_PASSWORD
+    );
+  } catch (error) {
+    return res.status(401).json({ error: "Expired link. Try again!" });
+  }
+  try {
+    let user = await User.findById(decoded.id);
+    if (!user || user.resetPasswordLink !== resetPasswordLink) {
+      throw new Error();
+    }
+    const updateFields = { password, resetPasswordLink: "" };
+    user = _.extend(user, updateFields);
+    await user.save();
+    res.json({ message: "Great. Now you can login with your new password!" });
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({ error: "Something went wrong. Try again!" });
   }
 };
