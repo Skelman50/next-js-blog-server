@@ -59,7 +59,10 @@ exports.authMiddleware = async (req, res, next) => {
   const authUserId = req.user.id;
 
   try {
-    const user = await User.findById(authUserId);
+    const user = await await User.findById(authUserId).select(
+      "-photo -salt -hashed_password"
+    );
+
     if (!user) {
       throw new Error();
     }
@@ -73,7 +76,10 @@ exports.authMiddleware = async (req, res, next) => {
 exports.adminMiddleware = async (req, res, next) => {
   const adminUserId = req.user.id;
   try {
-    const user = await User.findById(adminUserId);
+    const user = await User.findById(adminUserId).select(
+      "-photo -salt -hashed_password"
+    );
+
     if (!user) {
       throw new Error();
     }

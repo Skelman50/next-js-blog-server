@@ -7,6 +7,6 @@ const router = express.Router();
 router.get("/profile", requireSignin, authMiddleware, read);
 router.get("/:username", publicProfile);
 router.put("/update", requireSignin, authMiddleware, update);
-router.get("/update/:username", photo);
+router.get("/photo/:username", photo);
 
 module.exports = router;
