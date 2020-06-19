@@ -150,6 +150,7 @@ exports.forgotPassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   const { resetPasswordLink, password } = req.body;
+
   try {
     var decoded = await jwt.verify(
       resetPasswordLink,
@@ -160,7 +161,10 @@ exports.resetPassword = async (req, res) => {
   }
   try {
     let user = await User.findById(decoded.id);
-    if (!user || user.resetPasswordLink !== resetPasswordLink) {
+    if (
+      !user ||
+      user.resetPasswordLink.toString() !== resetPasswordLink.toString()
+    ) {
       throw new Error();
     }
     const updateFields = { password, resetPasswordLink: "" };
