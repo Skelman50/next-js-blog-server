@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const expressJwt = require("express-jwt");
 const sgMail = require("@sendgrid/mail");
 const _ = require("lodash");
+const { OAuth2Client } = require("google-auth-library");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -212,4 +213,54 @@ exports.preSignup = async (req, res) => {
   await sgMail.send(emailData);
 
   res.json({ message: `Email has been sent to ${email}` });
+};
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+exports.googleLogin = async (req, res) => {
+  const { idToken } = req.body;
+  const response = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const {
+    email: googleEmail,
+    name: googleName,
+    email_verified,
+    jti,
+  } = response.payload;
+
+  if (email_verified) {
+    const user = await User.findOne({ email: googleEmail });
+    if (user) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+      });
+      res.cookie("token", token, { expiresIn: "1d" });
+      const { _id, username, name, email, role } = user;
+      res.json({ user: { _id, username, name, email, role }, token });
+    } else {
+      const usernameToSave = shortId.generate();
+      const profile = `${process.env.CLIENT_URL}/profile/${usernameToSave}`;
+      const password = jti + process.env.JWT_SECRET;
+      try {
+        const user = await User.create({
+          name: googleName,
+          email: googleEmail,
+          password,
+          profile,
+          username: usernameToSave,
+        });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+          expiresIn: "1d",
+        });
+        res.cookie("token", token, { expiresIn: "1d" });
+        const { _id, username, name, email, role } = user;
+        res.json({ user: { _id, username, name, email, role }, token });
+      } catch (error) {
+        res.status(400).json({ error: dbErrorHandler(error) });
+      }
+    }
+  } else {
+    res.status(400).json({ error: "Google login faules" });
+  }
 };
