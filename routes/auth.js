@@ -5,18 +5,21 @@ const {
   signout,
   forgotPassword,
   resetPassword,
+  preSignup,
 } = require("../controllers/auth");
 const { runValidation } = require("../validators/index");
 const {
   userSignupValidator,
   userSigninValidator,
   forgotPassworValidator,
+  activateAccountValidator,
   resetPasswordValidator,
 } = require("../validators/auth");
 
 const router = express.Router();
 
-router.post("/signup", userSignupValidator, runValidation, signup);
+router.post("/signup", activateAccountValidator, runValidation, signup);
+router.post("/pre-signup", userSignupValidator, runValidation, preSignup);
 router.post("/signin", userSigninValidator, runValidation, signin);
 router.get("/signout", signout);
 router.put(

@@ -8,6 +8,10 @@ exports.userSignupValidator = [
     .withMessage("Passwort must be at least 6 characters long"),
 ];
 
+exports.activateAccountValidator = [
+  check("token").not().isEmpty().withMessage("Token is required"),
+];
+
 exports.userSigninValidator = [
   check("email").isEmail().withMessage("Must be a valid email"),
   check("password")

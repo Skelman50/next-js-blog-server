@@ -11,8 +11,10 @@ const Blog = require("../models/blog");
 const { dbErrorHandler } = require("../helpers/dbErrorHandler");
 
 exports.signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { token } = req.body;
   try {
+    const decoded = await jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION);
+    const { email, password, name } = decoded;
     const user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ error: "Email is taken" });
@@ -27,11 +29,11 @@ exports.signup = async (req, res) => {
       profile,
       username,
     });
-    // res.json({ user: newUser });
-    res.json({ message: "Signup success. Please Signin!" });
+    res.json({
+      message: `Hello ${name}! Your signup is success. Please Signin!`,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: "Can not signup. Please try again!" });
   }
 };
 
@@ -175,4 +177,39 @@ exports.resetPassword = async (req, res) => {
     console.log(error);
     res.status(404).json({ error: "Something went wrong. Try again!" });
   }
+};
+
+exports.preSignup = async (req, res) => {
+  const { email, name, password } = req.body;
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (user) {
+    return res.status(400).json({ error: "Email is taken!" });
+  }
+
+  const token = jwt.sign(
+    { email, name, password },
+    process.env.JWT_ACCOUNT_ACTIVATION,
+    {
+      expiresIn: "10m",
+    }
+  );
+  const emailData = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: `Account activation link`,
+    html: `
+        <p>Please use this link to activate your account:</p>
+        <a href=${process.env.CLIENT_URL}/auth/account/activation/${token} target="blank">
+          ${process.env.CLIENT_URL}/auth/account/activate/${token}
+        </a>
+        <hr/>
+        <p>This email may contain secsetive information!</p>
+        <p>https://seoblog.com</p>
+    `,
+  };
+
+  await sgMail.send(emailData);
+
+  res.json({ message: `Email has been sent to ${email}` });
 };
