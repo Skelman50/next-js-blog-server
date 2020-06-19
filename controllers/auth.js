@@ -132,7 +132,9 @@ exports.forgotPassword = async (req, res) => {
       subject: `Password reset link`,
       html: `
           <p>Please use this link to reset ypur password:</p>
-          <p>${process.env.CLIENT_URL}/auth/password/reset/${token}</p>
+          <a href=${process.env.CLIENT_URL}/auth/password/reset/${token} target="blank">
+            ${process.env.CLIENT_URL}/auth/password/reset/${token}
+          </a>
           <hr/>
           <p>This email may contain secsetive information!</p>
           <p>https://seoblog.com</p>
